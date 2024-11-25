@@ -7,23 +7,29 @@ class ClientDAO:
     def get_all_clients():
         try:
             cursor = current_app.mysql.connection.cursor()
-            cursor.execute("SELECT * FROM client")
+            cursor.execute("""
+                SELECT c.client_id, c.full_name, c.email, c.phone_num, c.discount_cards_id, lp.program_name
+                FROM client c
+                LEFT JOIN loyalty_program lp ON c.loyalty_program_id = lp.id
+            """)
             clients = cursor.fetchall()
             cursor.close()
-            return [ClientDAO._to_dict(client) for client in clients]
+            return [ClientDAO._to_dict_with_program(client) for client in clients]
         except Exception as e:
             current_app.logger.error(f"Error retrieving clients: {str(e)}")
             raise Exception(f"Error retrieving clients: {str(e)}")
 
+
+
     @staticmethod
-    def _to_dict(client_row):
-        """Convert a client row from the database into a dictionary"""
+    def _to_dict_with_program(client_row):
         return {
             "id": client_row[0],
             "full_name": client_row[1],
             "email": client_row[2],
             "phone_num": client_row[3],
-            "discount_cards_id": client_row[4]
+            "discount_cards_id": client_row[4],
+            "loyalty_program": client_row[5]  # Назва програми
         }
 
 
@@ -69,10 +75,10 @@ class ClientDAO:
             cursor.execute("""
                 SELECT c.full_name, l.city
                 FROM client c
-                LEFT JOIN booking b ON c.id = b.client_id
-                LEFT JOIN room r ON b.room_id = r.id
-                LEFT JOIN hotel h ON r.hotel_id = h.id
-                LEFT JOIN location l ON h.location_id = l.id
+                LEFT JOIN booking b ON c.client_id = b.client_id
+                LEFT JOIN room r ON b.room_id = r.room_id
+                LEFT JOIN hotel h ON r.hotel_id = h.hotel_id
+                LEFT JOIN location l ON h.location_id = l.location_id
                 WHERE l.city = %s
             """, (city,))
             clients = cursor.fetchall()
@@ -83,10 +89,10 @@ class ClientDAO:
             raise Exception(f"Error retrieving clients for city {city}: {str(e)}")
 
     @staticmethod
-    def insert_client(full_name, email, phone_num, discount_cards_id):
+    def insert_client(full_name, email, phone_num, discount_cards_id, loyalty_program_id):
         try:
             cursor = current_app.mysql.connection.cursor()
-            cursor.callproc('insert_client', [full_name, email, phone_num, discount_cards_id])
+            cursor.callproc('insert_client', [full_name, email, phone_num, discount_cards_id, loyalty_program_id])
             current_app.mysql.connection.commit()
             cursor.close()
             return {"status": "success", "message": "Client added successfully"}
@@ -95,43 +101,44 @@ class ClientDAO:
             current_app.logger.error(f"Error inserting client: {str(e)}")
             raise Exception(f"Error inserting client: {str(e)}")
 
-    @staticmethod
-    def get_stat():
-        """Calls the calculate_stat stored procedure to get a statistical value"""
-        try:
-            table_name = request.json.get('table')
-            column_name = request.json.get('column')
-            operation = request.json.get('operation')
 
-            if not table_name or not column_name or not operation:
-                raise ValueError("Table name, column name, and operation must be provided")
+    # @staticmethod
+    # def get_stat():
+    #     """Calls the calculate_stat stored procedure to get a statistical value"""
+    #     try:
+    #         table_name = request.json.get('table')
+    #         column_name = request.json.get('column')
+    #         operation = request.json.get('operation')
 
-            result = ClientDAO.calculate_stat(table_name, column_name, operation)
-            return jsonify(result), 200
-        except ValueError as ve:
-            return jsonify({"error": str(ve)}), 400
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
+    #         if not table_name or not column_name or not operation:
+    #             raise ValueError("Table name, column name, and operation must be provided")
 
-    @staticmethod
-    def calculate_stat(table_name, column_name, operation):
-        try:
-            cursor = current_app.mysql.connection.cursor()
+    #         result = ClientDAO.calculate_stat(table_name, column_name, operation)
+    #         return jsonify(result), 200
+    #     except ValueError as ve:
+    #         return jsonify({"error": str(ve)}), 400
+    #     except Exception as e:
+    #         return jsonify({"error": str(e)}), 500
 
-            cursor.callproc('calculate_stat', [table_name, column_name, operation])
+    # @staticmethod
+    # def calculate_stat(table_name, column_name, operation):
+    #     try:
+    #         cursor = current_app.mysql.connection.cursor()
 
-            result = cursor.fetchone()
+    #         cursor.callproc('calculate_stat', [table_name, column_name, operation])
 
-            current_app.logger.debug(f"Raw database output: {result}")
+    #         result = cursor.fetchone()
 
-            if result and len(result) > 0 and result[0] is not None:
-                return {"status": "success", "result": result[0]}
-            else:
-                return {"status": "error", "message": "Result is NULL or not returned"}
-        except Exception as e:
-            current_app.logger.error(f"Error calculating stat: {str(e)}")
-            raise Exception(f"Error calculating stat: {str(e)}")
-        finally:
-            if cursor:
-                cursor.close()
+    #         current_app.logger.debug(f"Raw database output: {result}")
+
+    #         if result and len(result) > 0 and result[0] is not None:
+    #             return {"status": "success", "result": result[0]}
+    #         else:
+    #             return {"status": "error", "message": "Result is NULL or not returned"}
+    #     except Exception as e:
+    #         current_app.logger.error(f"Error calculating stat: {str(e)}")
+    #         raise Exception(f"Error calculating stat: {str(e)}")
+    #     finally:
+    #         if cursor:
+    #             cursor.close()
 

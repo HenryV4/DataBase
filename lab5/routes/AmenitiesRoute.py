@@ -21,3 +21,7 @@ def update_amenity(amenity_id):
 @amenities_bp.route('/amenities/<int:amenity_id>', methods=['DELETE'])
 def delete_amenity(amenity_id):
     return AmenitiesController.delete_amenity(amenity_id)
+
+@amenities_bp.route('/bulk', methods=['POST'])
+def insert_bulk_amenities():
+    return AmenitiesController.insert_bulk_amenities()

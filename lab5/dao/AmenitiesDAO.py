@@ -55,3 +55,15 @@ class AmenitiesDAO:
         except Exception as e:
             current_app.logger.error(f"Error deleting amenity with ID {amenity_id}: {str(e)}")
             raise Exception(f"Error deleting amenity with ID {amenity_id}: {str(e)}")
+
+    @staticmethod
+    def insert_bulk():
+        try:
+            cursor = current_app.mysql.connection.cursor()
+            cursor.callproc('insert_bulk_amenities')
+            current_app.mysql.connection.commit()
+            cursor.close()
+            return {"status": "success", "message": "Bulk amenities added successfully"}
+        except Exception as e:
+            current_app.mysql.connection.rollback()
+            raise Exception(f"Error inserting bulk amenities: {str(e)}")

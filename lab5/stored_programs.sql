@@ -8,11 +8,43 @@ DROP PROCEDURE IF EXISTS insert_client_hotel_relation;
 
 -- 1. Додаткова таблиця loyalty_program та тригер для зв'язку 1:M з client без фізичного зовнішнього ключа
 CREATE TABLE IF NOT EXISTS loyalty_program (
-    id INT NOT NULL AUTO_INCREMENT,
-    program_name VARCHAR(45) NOT NULL,
-    description TEXT,
-    PRIMARY KEY (id)
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    program_name VARCHAR(100) NOT NULL,
+    description TEXT
 );
+
+-- Наповнення таблиці loyalty_program тестовими даними
+INSERT INTO loyalty_program (program_name, description)
+VALUES 
+('Gold Membership', 'Premium benefits for loyal clients'),
+('Silver Membership', 'Standard benefits for clients');
+
+ALTER TABLE client
+ADD COLUMN loyalty_program_id INT;
+
+-- DELIMITER //
+
+-- CREATE TRIGGER client_loyalty_program_check
+-- BEFORE INSERT ON client
+-- FOR EACH ROW
+-- BEGIN
+--     DECLARE loyalty_exists INT;
+
+--     -- Перевірка, чи задано loyalty_program_id
+--     IF NEW.loyalty_program_id IS NOT NULL THEN
+--         SELECT COUNT(*) INTO loyalty_exists
+--         FROM loyalty_program
+--         WHERE id = NEW.loyalty_program_id;
+
+--         -- Якщо програма не існує, встановлюємо NULL
+--         IF loyalty_exists = 0 THEN
+--             SET NEW.loyalty_program_id = NULL;
+--         END IF;
+--     END IF;
+-- END;
+-- //
+
+-- DELIMITER ;
 
 DELIMITER //
 
@@ -21,9 +53,22 @@ BEFORE INSERT ON client
 FOR EACH ROW
 BEGIN
     DECLARE loyalty_exists INT;
-    SELECT COUNT(*) INTO loyalty_exists FROM loyalty_program WHERE id = NEW.loyalty_program_id;
-    IF loyalty_exists = 0 THEN
-        SET NEW.loyalty_program_id = NULL; -- Default action if loyalty program doesn’t exist
+
+    -- Перевірка, чи задано loyalty_program_id
+    IF NEW.loyalty_program_id IS NOT NULL THEN
+        SELECT COUNT(*) INTO loyalty_exists
+        FROM loyalty_program
+        WHERE id = NEW.loyalty_program_id;
+
+        -- Якщо програма не існує, сигналізуємо про помилку
+        IF loyalty_exists = 0 THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Loyalty program not found';
+        END IF;
+    END IF;
+
+    -- Додатково можна встановити обмеження (як у прикладі друга):
+    IF NEW.full_name IS NULL OR NEW.email IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Full name and email are required';
     END IF;
 END;
 //
@@ -31,19 +76,56 @@ END;
 DELIMITER ;
 
 -- 2. Параметризована процедура вставки клієнта у таблицю client
+-- DELIMITER //
+
+-- CREATE PROCEDURE insert_client(
+--     IN full_name VARCHAR(100),
+--     IN email VARCHAR(100),
+--     IN phone_num VARCHAR(20),
+--     IN discount_cards_id INT,
+--     IN loyalty_program_id INT
+-- )
+-- BEGIN
+--     -- Оголошення змінних має бути на початку блоку BEGIN
+--     DECLARE loyalty_exists INT;
+
+--     -- Перевірка існування програми лояльності
+--     IF loyalty_program_id IS NOT NULL THEN
+--         SELECT COUNT(*) INTO loyalty_exists
+--         FROM loyalty_program
+--         WHERE id = loyalty_program_id;
+
+--         IF loyalty_exists = 0 THEN
+--             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Loyalty program not found';
+--         END IF;
+--     END IF;
+
+--     -- Вставка запису в таблицю client
+--     INSERT INTO client (full_name, email, phone_num, discount_cards_id, loyalty_program_id)
+--     VALUES (full_name, email, phone_num, discount_cards_id, loyalty_program_id);
+-- END;
+-- //
+
+-- DELIMITER ;
+
 DELIMITER //
+
 CREATE PROCEDURE insert_client(
     IN full_name VARCHAR(100),
     IN email VARCHAR(100),
     IN phone_num VARCHAR(20),
-    IN discount_cards_id INT
+    IN discount_cards_id INT,
+    IN loyalty_program_id INT
 )
 BEGIN
-    INSERT INTO client (full_name, email, phone_num, discount_cards_id)
-    VALUES (full_name, email, phone_num, discount_cards_id);
+    -- Проста вставка запису в таблицю client
+    INSERT INTO client (full_name, email, phone_num, discount_cards_id, loyalty_program_id)
+    VALUES (full_name, email, phone_num, discount_cards_id, loyalty_program_id);
 END;
 //
+
 DELIMITER ;
+
 
 -- 3. Процедура для вставки зв'язку M:M між client і hotel (через client_hotel)
 CREATE TABLE IF NOT EXISTS client_hotel (
@@ -55,22 +137,36 @@ CREATE TABLE IF NOT EXISTS client_hotel (
 );
 
 DELIMITER //
+
 CREATE PROCEDURE insert_client_hotel_relation(
     IN client_name VARCHAR(100),
     IN hotel_name VARCHAR(45)
 )
 BEGIN
-    DECLARE clientID INT;
-    DECLARE hotelID INT;
+    DECLARE clientID INT DEFAULT NULL;
+    DECLARE hotelID INT DEFAULT NULL;
 
+    -- Отримуємо ID клієнта
     SELECT client_id INTO clientID FROM client WHERE full_name = client_name LIMIT 1;
+
+    -- Отримуємо ID готелю
     SELECT hotel_id INTO hotelID FROM hotel WHERE name = hotel_name LIMIT 1;
 
-    IF clientID IS NOT NULL AND hotelID IS NOT NULL THEN
-        INSERT INTO client_hotel (client_id, hotel_id) VALUES (clientID, hotelID);
+    -- Перевірка існування клієнта
+    IF clientID IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Client not found';
     END IF;
+
+    -- Перевірка існування готелю
+    IF hotelID IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Hotel not found';
+    END IF;
+
+    -- Вставка запису, якщо обидва ID знайдено
+    INSERT INTO client_hotel (client_id, hotel_id) VALUES (clientID, hotelID);
 END;
 //
+
 DELIMITER ;
 
 -- 4. Пакетна вставка 10 записів у таблицю amenities
@@ -110,17 +206,19 @@ END;
 
 DELIMITER ;
 
-
 -- 6. Процедура з курсором для створення двох таблиць з випадковим розподілом даних
 DELIMITER //
 CREATE PROCEDURE distribute_data_randomly()
 BEGIN
     DECLARE done INT DEFAULT FALSE;
-    DECLARE temp_id INT;
-    DECLARE cursor1 CURSOR FOR SELECT id FROM client;
+    DECLARE temp_client_id INT;
+    DECLARE cursor1 CURSOR FOR SELECT client_id FROM client; -- Заміна id на client_id
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
     SET @table1 = CONCAT('client_data_', UNIX_TIMESTAMP(), '_1');
     SET @table2 = CONCAT('client_data_', UNIX_TIMESTAMP(), '_2');
+
+    -- Створення нових таблиць
     SET @create_query1 = CONCAT('CREATE TABLE ', @table1, ' LIKE client');
     SET @create_query2 = CONCAT('CREATE TABLE ', @table2, ' LIKE client');
     PREPARE stmt1 FROM @create_query1;
@@ -130,25 +228,28 @@ BEGIN
     EXECUTE stmt2;
     DEALLOCATE PREPARE stmt2;
 
+    -- Відкриття курсора
     OPEN cursor1;
 
     read_loop: LOOP
-        FETCH cursor1 INTO temp_id;
+        FETCH cursor1 INTO temp_client_id;
         IF done THEN
             LEAVE read_loop;
         END IF;
 
+        -- Випадковий розподіл клієнтів
         IF RAND() > 0.5 THEN
-            SET @insert_query = CONCAT('INSERT INTO ', @table1, ' SELECT * FROM client WHERE id = ', temp_id);
+            SET @insert_query = CONCAT('INSERT INTO ', @table1, ' SELECT * FROM client WHERE client_id = ', temp_client_id);
         ELSE
-            SET @insert_query = CONCAT('INSERT INTO ', @table2, ' SELECT * FROM client WHERE id = ', temp_id);
+            SET @insert_query = CONCAT('INSERT INTO ', @table2, ' SELECT * FROM client WHERE client_id = ', temp_client_id);
         END IF;
-        
+
         PREPARE stmt FROM @insert_query;
         EXECUTE stmt;
         DEALLOCATE PREPARE stmt;
     END LOOP;
 
+    -- Закриття курсора
     CLOSE cursor1;
 END;
 //
@@ -184,14 +285,14 @@ DELIMITER ;
 
 -- 9. Тригер для забезпечення мінімальної кардинальності у 6 записів у таблиці review
 DELIMITER //
-CREATE TRIGGER maintain_min_reviews
-BEFORE DELETE ON review
+CREATE TRIGGER maintain_min_clients
+BEFORE DELETE ON client
 FOR EACH ROW
 BEGIN
-    DECLARE review_count INT;
-    SELECT COUNT(*) INTO review_count FROM review;
-    IF review_count <= 6 THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Minimum 6 reviews are required';
+    DECLARE client_count INT;
+    SELECT COUNT(*) INTO client_count FROM client;
+    IF client_count <= 8 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Minimum 8 clients are required';
     END IF;
 END;
 //

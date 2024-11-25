@@ -54,31 +54,30 @@ class ClientController:
             email = data['email']
             phone_num = data['phone_num']
             discount_cards_id = data.get('discount_cards_id')
+            loyalty_program_id = data.get('loyalty_program_id')  # Додаємо поле
 
-            result = ClientDAO.insert_client(full_name, email, phone_num, discount_cards_id)
+            result = ClientDAO.insert_client(full_name, email, phone_num, discount_cards_id, loyalty_program_id)
             return jsonify(result), 201
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    @staticmethod
-    def get_stat():
-        try:
-            data = request.get_json()
-            table_name = data.get('table')
-            column_name = data.get('column')
-            operation = data.get('operation')
 
-            if not table_name:
-                return jsonify({"error": "Table name is required"}), 400
-            if not column_name:
-                return jsonify({"error": "Column name is required"}), 400
-            if operation not in ['MAX', 'MIN', 'SUM', 'AVG']:
-                return jsonify({"error": "Invalid operation. Allowed: MAX, MIN, SUM, AVG"}), 400
+    # @staticmethod
+    # def get_stat():
+    #     try:
+    #         data = request.get_json()
+    #         table_name = data.get('table')
+    #         column_name = data.get('column')
+    #         operation = data.get('operation')
 
-            result = ClientDAO.calculate_stat(table_name, column_name, operation)
-            return jsonify(result), 200
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
+    #         if not table_name:
+    #             return jsonify({"error": "Table name is required"}), 400
+    #         if not column_name:
+    #             return jsonify({"error": "Column name is required"}), 400
+    #         if operation not in ['MAX', 'MIN', 'SUM', 'AVG']:
+    #             return jsonify({"error": "Invalid operation. Allowed: MAX, MIN, SUM, AVG"}), 400
 
-        
-    
+    #         result = ClientDAO.calculate_stat(table_name, column_name, operation)
+    #         return jsonify(result), 200
+    #     except Exception as e:
+    #         return jsonify({"error": str(e)}), 500

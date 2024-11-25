@@ -33,6 +33,6 @@ def get_clients_by_city(city):
 def add_client():
     return ClientController.add_client()
 
-@client_bp.route('/calculate', methods=['GET'])
-def get_stat():
-    return ClientController.get_stat()
+# @client_bp.route('/calculate', methods=['GET'])
+# def get_stat():
+#     return ClientController.get_stat()

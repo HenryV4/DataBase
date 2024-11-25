@@ -36,3 +36,11 @@ class AmenitiesController:
             return jsonify({'message': 'Amenity deleted successfully!'}), 200
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+
+    @staticmethod
+    def insert_bulk_amenities():
+        try:
+            result = AmenitiesDAO.insert_bulk()
+            return jsonify(result), 201
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
