@@ -26,7 +26,7 @@ mysql = MySQL(app)
 
 # MySQL configurations
 app.config['MYSQL_USER'] = 'root'  # Your MySQL username
-app.config['MYSQL_PASSWORD'] = 'Igor200626'  # Your MySQL password
+app.config['MYSQL_PASSWORD'] = ''  # Your MySQL password
 app.config['MYSQL_DB'] = 'lab5'  # Your database name
 app.config['MYSQL_HOST'] = 'localhost'  # MySQL host
 
