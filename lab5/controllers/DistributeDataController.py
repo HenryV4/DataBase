@@ -1,5 +1,5 @@
 from flask import jsonify
-from ..dao.DistributeDataDAO import DistributeDataDAO
+from dao.DistributeDataDAO import DistributeDataDAO
 
 class DistributeDataController:
     @staticmethod

@@ -1,6 +1,5 @@
-# controllers/DiscountCardController.py
 from flask import jsonify, request
-from ..dao.DiscountCardDAO import DiscountCardDAO
+from dao.DiscountCardDAO import DiscountCardDAO
 
 class DiscountCardController:
     @staticmethod

@@ -1,4 +1,3 @@
-# dao/BookingDAO.py
 from flask import current_app
 
 class BookingDAO:

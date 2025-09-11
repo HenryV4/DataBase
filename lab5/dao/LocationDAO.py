@@ -1,4 +1,3 @@
-# dao/LocationDAO.py
 from flask import current_app
 
 class LocationDAO:

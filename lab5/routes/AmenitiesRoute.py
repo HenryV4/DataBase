@@ -1,11 +1,8 @@
-# routes/AmenitiesRoute.py
 from flask import Blueprint
-from ..controllers.AmenitiesController import AmenitiesController
+from controllers.AmenitiesController import AmenitiesController
 
-# Creating the Blueprint for Amenities
 amenities_bp = Blueprint('amenities_bp', __name__)
 
-# Amenities Routes
 @amenities_bp.route('/amenities', methods=['GET'])
 def get_amenities():
     return AmenitiesController.get_all_amenities()

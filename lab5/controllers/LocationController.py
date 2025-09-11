@@ -1,6 +1,5 @@
-# controllers/LocationController.py
 from flask import jsonify, request
-from ..dao.LocationDAO import LocationDAO
+from dao.LocationDAO import LocationDAO
 
 class LocationController:
     @staticmethod

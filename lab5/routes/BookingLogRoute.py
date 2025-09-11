@@ -1,5 +1,5 @@
 from flask import Blueprint
-from ..controllers.BookingLogController import BookingLogController
+from controllers.BookingLogController import BookingLogController
 
 booking_log_bp = Blueprint('booking_log', __name__)
 

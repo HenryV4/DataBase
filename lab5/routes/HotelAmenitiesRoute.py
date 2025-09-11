@@ -1,8 +1,6 @@
-# routes/HotelAmenitiesRoute.py
 from flask import Blueprint
-from ..controllers.HotelAmenitiesController import HotelAmenitiesController
+from controllers.HotelAmenitiesController import HotelAmenitiesController
 
-# Creating the Blueprint for Hotel Amenities
 hotel_amenities_bp = Blueprint('hotel_amenities_bp', __name__)
 
 @hotel_amenities_bp.route('/hotels/<int:hotel_id>/amenities', methods=['GET'])

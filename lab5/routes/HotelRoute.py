@@ -1,6 +1,5 @@
-# routes/HotelRoute.py
 from flask import Blueprint
-from ..controllers.HotelController import HotelController
+from controllers.HotelController import HotelController
 
 hotel_bp = Blueprint('hotel_bp', __name__)
 

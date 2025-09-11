@@ -1,4 +1,3 @@
-# dao/ChainDAO.py
 from flask import current_app
 
 class ChainDAO:

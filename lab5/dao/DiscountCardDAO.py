@@ -1,4 +1,3 @@
-# dao/DiscountCardDAO.py
 from flask import current_app
 
 class DiscountCardDAO:

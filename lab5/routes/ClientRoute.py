@@ -1,6 +1,5 @@
-# routes/ClientRoute.py
 from flask import Blueprint
-from ..controllers.ClientController import ClientController
+from controllers.ClientController import ClientController
 
 client_bp = Blueprint('client_bp', __name__)
 
@@ -33,6 +32,3 @@ def get_clients_by_city(city):
 def add_client():
     return ClientController.add_client()
 
-# @client_bp.route('/calculate', methods=['GET'])
-# def get_stat():
-#     return ClientController.get_stat()

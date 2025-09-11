@@ -1,5 +1,4 @@
-# dao/HotelAmenitiesDAO.py
-# dao/HotelAmenitiesDAO.py
+
 from flask import current_app
 
 class HotelAmenitiesDAO:

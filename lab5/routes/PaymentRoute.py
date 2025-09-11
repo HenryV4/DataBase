@@ -1,6 +1,5 @@
-# routes/PaymentRoute.py
 from flask import Blueprint
-from ..controllers.PaymentController import PaymentController
+from controllers.PaymentController import PaymentController
 
 payment_bp = Blueprint('payment_bp', __name__)
 

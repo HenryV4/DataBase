@@ -1,6 +1,5 @@
-# routes/BookingRoute.py
 from flask import Blueprint
-from ..controllers.BookingController import BookingController
+from controllers.BookingController import BookingController
 
 booking_bp = Blueprint('booking_bp', __name__)
 

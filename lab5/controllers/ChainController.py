@@ -1,4 +1,3 @@
-# controllers/ChainController.py
 from flask import jsonify, request
 from dao.ChainDAO import ChainDAO
 

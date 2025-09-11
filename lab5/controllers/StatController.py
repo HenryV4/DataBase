@@ -1,5 +1,5 @@
 from flask import request, jsonify
-from ..dao.StatDAO import StatDAO
+from dao.StatDAO import StatDAO
 
 class StatController:
     @staticmethod

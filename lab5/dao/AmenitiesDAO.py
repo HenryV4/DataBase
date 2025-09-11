@@ -1,4 +1,3 @@
-# dao/AmenitiesDAO.py
 from flask import current_app
 
 class AmenitiesDAO:

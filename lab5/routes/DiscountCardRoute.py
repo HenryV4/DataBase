@@ -1,6 +1,5 @@
-# routes/DiscountCardRoute.py
 from flask import Blueprint
-from ..controllers.DiscountCardController import DiscountCardController
+from controllers.DiscountCardController import DiscountCardController
 
 discount_card_bp = Blueprint('discount_card_bp', __name__)
 

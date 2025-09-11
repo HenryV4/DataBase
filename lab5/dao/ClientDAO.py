@@ -1,4 +1,3 @@
-# dao/ClientDAO.py
 
 from flask import current_app, jsonify, request
 

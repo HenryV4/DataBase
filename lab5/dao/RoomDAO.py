@@ -1,4 +1,3 @@
-# dao/RoomDAO.py
 from flask import current_app
 
 class RoomDAO:
@@ -6,11 +5,10 @@ class RoomDAO:
     def get_all_rooms():
         try:
             cursor = current_app.mysql.connection.cursor()
-            cursor.execute("SELECT * FROM room")  # Querying the room table
-            rooms = cursor.fetchall()  # Fetching results
+            cursor.execute("SELECT * FROM room")
+            rooms = cursor.fetchall()
             cursor.close()
             
-            # Convert each row (tuple) to a dictionary
             room_list = []
             for room in rooms:
                 room_dict = {
@@ -36,7 +34,6 @@ class RoomDAO:
             cursor.close()
 
             if room:
-                # Convert the tuple to a dictionary
                 room_dict = {
                     'id': room[0],
                     'room_type': room[1],

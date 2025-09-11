@@ -1,4 +1,3 @@
-# dao/PaymentDAO.py
 from flask import current_app
 
 class PaymentDAO:

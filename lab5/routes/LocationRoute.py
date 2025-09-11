@@ -1,11 +1,8 @@
-# routes/LocationRoute.py
 from flask import Blueprint
-from ..controllers.LocationController import LocationController
+from controllers.LocationController import LocationController
 
-# Creating the Blueprint for Location
 location_bp = Blueprint('location_bp', __name__)
 
-# Location Routes
 @location_bp.route('/locations', methods=['GET'])
 def get_locations():
     return LocationController.get_all_locations()

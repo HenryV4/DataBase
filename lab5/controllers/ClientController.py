@@ -1,6 +1,5 @@
-# controllers/ClientController.py
 from flask import jsonify, request
-from ..dao.ClientDAO import ClientDAO
+from dao.ClientDAO import ClientDAO
 
 class ClientController:
     @staticmethod

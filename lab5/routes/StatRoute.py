@@ -1,5 +1,5 @@
 from flask import Blueprint
-from ..controllers.StatController import StatController
+from controllers.StatController import StatController
 
 stat_bp = Blueprint('stat', __name__)
 

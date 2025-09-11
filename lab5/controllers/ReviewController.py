@@ -1,6 +1,5 @@
-# controllers/ReviewController.py
 from flask import jsonify, request
-from ..dao.ReviewDAO import ReviewDAO
+from dao.ReviewDAO import ReviewDAO
 
 class ReviewController:
     @staticmethod

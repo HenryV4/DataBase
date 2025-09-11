@@ -1,5 +1,5 @@
 from flask import jsonify
-from ..dao.BookingLogDAO import BookingLogDAO
+from dao.BookingLogDAO import BookingLogDAO
 
 class BookingLogController:
     @staticmethod

@@ -1,6 +1,5 @@
-# controllers/PaymentController.py
 from flask import jsonify, request
-from ..dao.PaymentDAO import PaymentDAO
+from dao.PaymentDAO import PaymentDAO
 
 class PaymentController:
     @staticmethod

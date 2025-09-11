@@ -2,21 +2,21 @@
 from flask import Flask, jsonify
 import logging
 from flask_mysqldb import MySQL
-from .routes.LocationRoute import location_bp
-from .routes.ChainRoute import chain_bp
-from .routes.HotelRoute import hotel_bp
-from .routes.RoomRoute import room_bp
-from .routes.DiscountCardRoute import discount_card_bp
-from .routes.ClientRoute import client_bp
-from .routes.PaymentRoute import payment_bp
-from .routes.BookingRoute import booking_bp
-from .routes.ReviewRoute import review_bp
-from .routes.AmenitiesRoute import amenities_bp
-from .routes.HotelAmenitiesRoute import hotel_amenities_bp
-from .routes.ClientHotelRoute import client_hotel_bp
-from .routes.DistributeDataRoute import distribute_data_bp
-from .routes.BookingLogRoute import booking_log_bp
-from .routes.StatRoute import stat_bp
+from routes.LocationRoute import location_bp
+from routes.ChainRoute import chain_bp
+from routes.HotelRoute import hotel_bp
+from routes.RoomRoute import room_bp
+from routes.DiscountCardRoute import discount_card_bp
+from routes.ClientRoute import client_bp
+from routes.PaymentRoute import payment_bp
+from routes.BookingRoute import booking_bp
+from routes.ReviewRoute import review_bp
+from routes.AmenitiesRoute import amenities_bp
+from routes.HotelAmenitiesRoute import hotel_amenities_bp
+from routes.ClientHotelRoute import client_hotel_bp
+from routes.DistributeDataRoute import distribute_data_bp
+from routes.BookingLogRoute import booking_log_bp
+from routes.StatRoute import stat_bp
 
 
 # Initialize Flask app

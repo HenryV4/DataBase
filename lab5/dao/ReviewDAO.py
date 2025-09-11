@@ -1,4 +1,3 @@
-# dao/ReviewDAO.py
 from flask import current_app
 
 class ReviewDAO:

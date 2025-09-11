@@ -1,6 +1,5 @@
-# routes/ReviewRoute.py
 from flask import Blueprint
-from ..controllers.ReviewController import ReviewController
+from controllers.ReviewController import ReviewController
 
 review_bp = Blueprint('review_bp', __name__)
 

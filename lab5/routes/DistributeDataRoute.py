@@ -1,5 +1,5 @@
 from flask import Blueprint
-from ..controllers.DistributeDataController import DistributeDataController
+from controllers.DistributeDataController import DistributeDataController
 
 distribute_data_bp = Blueprint('distribute_data', __name__)
 

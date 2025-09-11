@@ -1,6 +1,5 @@
-# controllers/AmenitiesController.py
 from flask import jsonify, request
-from ..dao.AmenitiesDAO import AmenitiesDAO
+from dao.AmenitiesDAO import AmenitiesDAO
 
 class AmenitiesController:
     @staticmethod

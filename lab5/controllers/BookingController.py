@@ -1,6 +1,5 @@
-# controllers/BookingController.py
 from flask import jsonify, request
-from ..dao.BookingDAO import BookingDAO
+from dao.BookingDAO import BookingDAO
 
 class BookingController:
     @staticmethod

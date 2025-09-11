@@ -1,5 +1,5 @@
 from flask import request, jsonify
-from ..dao.ClientHotelDAO import ClientHotelDAO
+from dao.ClientHotelDAO import ClientHotelDAO
 
 class ClientHotelController:
     @staticmethod
@@ -11,7 +11,7 @@ class ClientHotelController:
 
             result = ClientHotelDAO.insert_relation(client_name, hotel_name)
             if result['status'] == "error":
-                return jsonify(result), 400  # Помилка для клієнта
+                return jsonify(result), 400
             return jsonify(result), 201
         except Exception as e:
             return jsonify({"error": str(e)}), 500

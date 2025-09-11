@@ -1,6 +1,5 @@
-# controllers/RoomController.py
 from flask import jsonify, request
-from ..dao.RoomDAO import RoomDAO
+from dao.RoomDAO import RoomDAO
 
 class RoomController:
     @staticmethod
