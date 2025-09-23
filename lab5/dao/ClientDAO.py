@@ -9,7 +9,7 @@ class ClientDAO:
             cursor.execute("""
                 SELECT c.client_id, c.full_name, c.email, c.phone_num, c.discount_cards_id, lp.program_name
                 FROM client c
-                LEFT JOIN loyalty_program lp ON c.loyalty_program_id = lp.id
+                LEFT JOIN loyalty_program lp ON c.loyalty_program_id = lp.loyalty_program_id
             """)
             clients = cursor.fetchall()
             cursor.close()

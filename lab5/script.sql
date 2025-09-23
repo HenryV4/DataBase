@@ -70,6 +70,16 @@ CREATE TABLE IF NOT EXISTS discount_cards (
   PRIMARY KEY (discount_cards_id)
 ) ENGINE = InnoDB;
 
+-- Create loyalty_program table
+CREATE TABLE IF NOT EXISTS loyalty_program (
+  loyalty_program_id INT NOT NULL AUTO_INCREMENT,
+  program_name VARCHAR(100) NOT NULL,
+  tier_level VARCHAR(20),
+  discount_percent DECIMAL(5,2) DEFAULT 0.00,
+  PRIMARY KEY (loyalty_program_id),
+  UNIQUE KEY uq_loyalty_program_name (program_name)
+) ENGINE = InnoDB;
+
 -- Create client table
 CREATE TABLE IF NOT EXISTS client (
   client_id INT NOT NULL AUTO_INCREMENT,
@@ -77,8 +87,10 @@ CREATE TABLE IF NOT EXISTS client (
   email VARCHAR(100) NOT NULL,
   phone_num VARCHAR(20) NOT NULL,
   discount_cards_id INT,
+  loyalty_program_id INT,
   PRIMARY KEY (client_id),
-  FOREIGN KEY (discount_cards_id) REFERENCES discount_cards(discount_cards_id) ON DELETE SET NULL
+  FOREIGN KEY (discount_cards_id) REFERENCES discount_cards(discount_cards_id) ON DELETE SET NULL,
+  FOREIGN KEY (loyalty_program_id) REFERENCES loyalty_program(loyalty_program_id) ON DELETE SET NULL
 ) ENGINE = InnoDB;
 
 -- Create payment table
@@ -186,18 +198,25 @@ INSERT IGNORE INTO discount_cards (name, discount) VALUES
 ('platinum', '15%'),
 ('diamond', '20%');
 
+-- Seed: loyalty_program
+INSERT IGNORE INTO loyalty_program (program_name, tier_level, discount_percent) VALUES
+('Basic',   'Bronze',   0.00),
+('Silver',  'Silver',   5.00),
+('Gold',    'Gold',    10.00),
+('Platinum','Platinum', 15.00);
+
 -- Insert data for client
-INSERT IGNORE INTO client (full_name, email, phone_num, discount_cards_id) VALUES
-('John Doe', 'johndoe@gmail.com', '+380123456789', 1),
-('Jane Smith', 'janesmith@gmail.com', '+380987654321', 2),
-('Mark Brown', 'markbrown@gmail.com', '+48123456789', NULL),
-('Anna Johnson', 'annajonson@gmail.com', '+49301234567', 3),
-('Tom Lee', 'tomlee@gmail.com', '+43123456789', NULL),
-('Emily White', 'emilywhite@gmail.com', '+441234567890', 1),
-('Michael Green', 'michaelgreen@gmail.com', '+34123456789', 2),
-('Luca Rossi', 'lucarossi@gmail.com', '+390123456789', 3),
-('Hiroshi Tanaka', 'hiroshitanaka@gmail.com', '+811234567890', NULL),
-('Olivia Miller', 'oliviamiller@gmail.com', '+49123456789', 4);
+INSERT IGNORE INTO client (full_name, email, phone_num, discount_cards_id, loyalty_program_id) VALUES
+('John Doe', 'johndoe@gmail.com', '+380123456789', 1, 3),
+('Jane Smith', 'janesmith@gmail.com', '+380987654321', 2, 2),
+('Mark Brown', 'markbrown@gmail.com', '+48123456789', NULL, NULL),
+('Anna Johnson', 'annajonson@gmail.com', '+49301234567', 3, 2),
+('Tom Lee', 'tomlee@gmail.com', '+43123456789', NULL, 4),
+('Emily White', 'emilywhite@gmail.com', '+441234567890', 1, NULL),
+('Michael Green', 'michaelgreen@gmail.com', '+34123456789', 2, NULL),
+('Luca Rossi', 'lucarossi@gmail.com', '+390123456789', 3, NULL),
+('Hiroshi Tanaka', 'hiroshitanaka@gmail.com', '+811234567890', NULL, 1),
+('Olivia Miller', 'oliviamiller@gmail.com', '+49123456789', 4, NULL);
 
 -- Insert data for payment
 INSERT IGNORE INTO payment (card_number, payment_amount, payment_date, status, client_id) VALUES
