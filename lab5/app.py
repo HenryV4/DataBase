@@ -1,4 +1,6 @@
 # app.py
+import os
+from dotenv import load_dotenv
 from flask import Flask, jsonify
 import logging
 from flask_mysqldb import MySQL
@@ -25,10 +27,19 @@ app.config['DEBUG'] = True
 mysql = MySQL(app) 
 
 # MySQL configurations
-app.config['MYSQL_USER'] = 'root'  # Your MySQL username
-app.config['MYSQL_PASSWORD'] = ''  # Your MySQL password
-app.config['MYSQL_DB'] = 'lab5'  # Your database name
-app.config['MYSQL_HOST'] = 'localhost'  # MySQL host
+load_dotenv()
+
+def env(name, default=None, required=False):
+    val = os.getenv(name, default)
+    if required and (val is None or val == ""):
+        raise RuntimeError(f"Missing required env var: {name}")
+    return val
+
+app.config['MYSQL_HOST'] = env('DB_HOST', '127.0.0.1')
+app.config['MYSQL_PORT'] = int(env('DB_PORT', '3306'))
+app.config['MYSQL_USER'] = env('DB_USER', required=True)
+app.config['MYSQL_PASSWORD'] = env('DB_PASS', required=True)
+app.config['MYSQL_DB'] = env('DB_NAME', required=True)
 
 app.mysql = mysql
 
