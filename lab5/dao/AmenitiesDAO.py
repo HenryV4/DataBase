@@ -3,66 +3,97 @@ from flask import current_app
 class AmenitiesDAO:
     @staticmethod
     def get_all_amenities():
+        cursor = None
         try:
             cursor = current_app.mysql.connection.cursor()
-            cursor.execute("SELECT * FROM amenities")
-            amenities = cursor.fetchall()
-            cursor.close()
-            return [AmenitiesDAO._to_dict(amenity) for amenity in amenities]
+            cursor.execute("SELECT amenities_id, name FROM amenities")
+            rows = cursor.fetchall()
+            return [AmenitiesDAO._to_dict(r) for r in rows]
         except Exception as e:
             current_app.logger.error(f"Error retrieving amenities: {str(e)}")
             raise Exception(f"Error retrieving amenities: {str(e)}")
+        finally:
+            try:
+                if cursor: cursor.close()
+            except Exception:
+                pass
 
     @staticmethod
-    def _to_dict(amenity_row):
-        """Convert an amenity row from the database into a dictionary"""
+    def _to_dict(row):
+        amenities_id, name = row
         return {
-            "id": amenity_row[0],
-            "name": amenity_row[1]
+            "amenities_id": amenities_id,  # лише назва таблиці + _id
+            "name": name
         }
-
 
     @staticmethod
     def insert_amenity(name):
+        cursor = None
         try:
             cursor = current_app.mysql.connection.cursor()
             cursor.execute("INSERT INTO amenities (name) VALUES (%s)", (name,))
             current_app.mysql.connection.commit()
-            cursor.close()
+            return cursor.lastrowid
         except Exception as e:
             current_app.logger.error(f"Error inserting amenity: {str(e)}")
+            current_app.mysql.connection.rollback()
             raise Exception(f"Error inserting amenity: {str(e)}")
+        finally:
+            try:
+                if cursor: cursor.close()
+            except Exception:
+                pass
 
     @staticmethod
-    def update_amenity(amenity_id, name):
+    def update_amenity(amenities_id, name):
+        cursor = None
         try:
             cursor = current_app.mysql.connection.cursor()
-            cursor.execute("UPDATE amenities SET name=%s WHERE amenity_id=%s", (name, amenity_id))
+            cursor.execute(
+                "UPDATE amenities SET name=%s WHERE amenities_id=%s",
+                (name, amenities_id)
+            )
             current_app.mysql.connection.commit()
-            cursor.close()
         except Exception as e:
-            current_app.logger.error(f"Error updating amenity with ID {amenity_id}: {str(e)}")
-            raise Exception(f"Error updating amenity with ID {amenity_id}: {str(e)}")
+            current_app.logger.error(f"Error updating amenity {amenities_id}: {str(e)}")
+            current_app.mysql.connection.rollback()
+            raise Exception(f"Error updating amenity {amenities_id}: {str(e)}")
+        finally:
+            try:
+                if cursor: cursor.close()
+            except Exception:
+                pass
 
     @staticmethod
-    def delete_amenity(amenity_id):
+    def delete_amenity(amenities_id):
+        cursor = None
         try:
             cursor = current_app.mysql.connection.cursor()
-            cursor.execute("DELETE FROM amenities WHERE amenity_id=%s", (amenity_id,))
+            cursor.execute("DELETE FROM amenities WHERE amenities_id=%s", (amenities_id,))
             current_app.mysql.connection.commit()
-            cursor.close()
         except Exception as e:
-            current_app.logger.error(f"Error deleting amenity with ID {amenity_id}: {str(e)}")
-            raise Exception(f"Error deleting amenity with ID {amenity_id}: {str(e)}")
+            current_app.logger.error(f"Error deleting amenity {amenities_id}: {str(e)}")
+            current_app.mysql.connection.rollback()
+            raise Exception(f"Error deleting amenity {amenities_id}: {str(e)}")
+        finally:
+            try:
+                if cursor: cursor.close()
+            except Exception:
+                pass
 
     @staticmethod
     def insert_bulk():
+        cursor = None
         try:
             cursor = current_app.mysql.connection.cursor()
             cursor.callproc('insert_bulk_amenities')
             current_app.mysql.connection.commit()
-            cursor.close()
             return {"status": "success", "message": "Bulk amenities added successfully"}
         except Exception as e:
             current_app.mysql.connection.rollback()
             raise Exception(f"Error inserting bulk amenities: {str(e)}")
+        finally:
+            try:
+                if cursor: cursor.close()
+            except Exception:
+                pass
