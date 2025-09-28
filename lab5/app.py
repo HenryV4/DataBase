@@ -16,9 +16,6 @@ from routes.ReviewRoute import review_bp
 from routes.AmenitiesRoute import amenities_bp
 from routes.HotelAmenitiesRoute import hotel_amenities_bp
 from routes.ClientHotelRoute import client_hotel_bp
-from routes.DistributeDataRoute import distribute_data_bp
-from routes.BookingLogRoute import booking_log_bp
-from routes.StatRoute import stat_bp
 
 
 # Initialize Flask app
@@ -59,9 +56,6 @@ app.register_blueprint(review_bp, url_prefix='/api')
 app.register_blueprint(amenities_bp, url_prefix='/api')
 app.register_blueprint(hotel_amenities_bp, url_prefix='/api')
 app.register_blueprint(client_hotel_bp, url_prefix='/api')
-app.register_blueprint(distribute_data_bp, url_prefix='/api')
-app.register_blueprint(booking_log_bp, url_prefix='/api')
-app.register_blueprint(stat_bp, url_prefix='/api')
 
 @app.route('/')
 def show_tables():
