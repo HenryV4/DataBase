@@ -12,7 +12,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 1) Отримуємо host key ВМ (для known_hosts)
+      # 1) Знімаємо host key (щоб не було prompt про known_hosts)
       - name: Scan VM host key
         id: scan
         run: |
@@ -21,15 +21,34 @@ jobs:
           echo "$KH" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      # 2) Встановлюємо SSH-ключ з паролем
+      # 2) Кладемо ЗАШИФРОВАНИЙ ключ у ~/.ssh/id_ed25519 (або id_rsa — неважливо)
       - name: Install SSH key (with passphrase)
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           known_hosts: ${{ steps.scan.outputs.known_hosts }}
+          name: id_ed25519               # покладемо як ~/.ssh/id_ed25519
+          if_key_exists: replace
 
-      # 3) Синхронізуємо код з локальної папки "lab5/" у "/home/<user>/DataBase/lab5/" на ВМ
+      # 3) Стартуємо ssh-agent і додаємо ключ у агент БЕЗ взаємодії
+      - name: Add key to ssh-agent (non-interactive)
+        env:
+          SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
+        run: |
+          set -e
+          eval "$(ssh-agent -s)"
+          # askpass-скрипт, який повертає passphrase
+          echo 'echo "$SSH_PASSPHRASE"' > ./askpass.sh
+          chmod +x ./askpass.sh
+          export SSH_ASKPASS="$PWD/askpass.sh"
+          export DISPLAY=:0  # потрібно будь-яке ненульове, щоб SSH_ASKPASS спрацював
+          # додаємо ключ у агент (пробуємо id_ed25519 та id_rsa на всяк випадок)
+          setsid -w ssh-add ~/.ssh/id_ed25519 < /dev/null || \
+          setsid -w ssh-add ~/.ssh/id_rsa     < /dev/null
+          ssh-add -l
+
+      # 4) Синхронізуємо ВМІСТ локальної папки lab5/ у каталог на ВМ
       - name: Rsync code to VM
         run: |
           rsync -az --delete \
@@ -41,12 +60,12 @@ jobs:
             --exclude '.env' \
             ./lab5/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/DataBase/lab5/
 
-      # 4) Деплой-скрипт на ВМ (ставить залежності, рестартить flask)
+      # 5) Деплой (залежності + рестарт flask)
       - name: Remote deploy (deps + restart)
         run: |
           ssh -p ${{ secrets.SSH_PORT || 22 }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '~/deploy_lab5.sh'
 
-      # 5) Health-check через nginx -> gunicorn
+      # 6) Health-check через nginx
       - name: Remote health check
         run: |
           ssh -p ${{ secrets.SSH_PORT || 22 }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
