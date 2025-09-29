@@ -99,15 +99,9 @@ def show_tables():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Test route to verify the MySQL connection
-@app.route('/test_db')
-def test_db():
-    try:
-        cursor = mysql.connection.cursor()
-        cursor.execute("SELECT 1")
-        return "Database connection is working!"
-    except Exception as e:
-        return f"Error: {str(e)}"
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"status": "ok"}), 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000, debug=False)
