@@ -12,39 +12,38 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 1) Знімаємо host key, щоб не було prompt
-      - name: Scan VM host key
-        id: scan
+      # 1) Підготуємо ~/.ssh та known_hosts
+      - name: Prepare SSH dir & known_hosts
         run: |
-          KH=$(ssh-keyscan -p "${{ secrets.SSH_PORT || 22 }}" "${{ secrets.SSH_HOST }}" 2>/dev/null)
-          echo "known_hosts<<EOF" >> $GITHUB_OUTPUT
-          echo "$KH" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          ssh-keyscan -p "${{ secrets.SSH_PORT || 22 }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
 
-      # 2) Кладемо ЗАШИФРОВАНИЙ приватний ключ у ~/.ssh (пароль тримаємо в секреті)
-      - name: Install SSH key (with passphrase)
-        uses: shimataro/ssh-key-action@v2
-        with:
-          key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          known_hosts: ${{ steps.scan.outputs.known_hosts }}
-          name: id_ed25519
-          if_key_exists: replace
-
-      # 3) Ставимо sshpass для неінтерактивного введення пароля ключа
-      - name: Install sshpass
+      # 2) Записуємо ЗАШИФРОВАНИЙ приватний ключ у файл
+      - name: Write encrypted private key
         run: |
-          sudo apt-get update
-          sudo apt-get install -y sshpass
+          cat > ~/.ssh/id_ed25519 <<'EOF'
+          ${{ secrets.SSH_KEY }}
+          EOF
+          chmod 600 ~/.ssh/id_ed25519
 
-      # 4) Rsync: синхронізуємо ВМІСТ локальної lab5/ у /home/<user>/DataBase/lab5/
-      - name: Rsync code to VM
+      # 3) РОЗШИФРОВУЄМО ключ (прибираємо passphrase)
+      - name: Decrypt private key with passphrase
         env:
-          SSHPASS: ${{ secrets.SSH_PASSPHRASE }}
+          SSH_PASSPHRASE: ${{ secrets.SSH_PASSPHRASE }}
         run: |
-          ssh_opts="-p ${{ secrets.SSH_PORT || 22 }} -o StrictHostKeyChecking=no"
+          # -P: old passphrase, -N: new passphrase (порожня)
+          ssh-keygen -p -P "$SSH_PASSPHRASE" -N "" -f ~/.ssh/id_ed25519
+          # Перевіримо, що ключ читається без пароля
+          ssh -i ~/.ssh/id_ed25519 -o BatchMode=yes -o StrictHostKeyChecking=yes -p ${{ secrets.SSH_PORT || 22 }} \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "echo SSH_OK"
+
+      # 4) Синхронізуємо ВМІСТ локальної папки lab5/ у /home/<user>/DataBase/lab5/ на ВМ
+      - name: Rsync code to VM
+        run: |
           rsync -az --delete \
-            -e "sshpass -e ssh $ssh_opts" \
+            -e "ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes -p ${{ secrets.SSH_PORT || 22 }}" \
             --exclude '.git' \
             --exclude '.github' \
             --exclude '__pycache__' \
@@ -52,20 +51,16 @@ jobs:
             --exclude '.env' \
             ./lab5/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/DataBase/lab5/
 
-      # 5) Деплой-скрипт на ВМ (встановлює залежності, рестартить flask)
+      # 5) Деплой-скрипт на ВМ (встановлення залежностей + рестарт flask)
       - name: Remote deploy (deps + restart)
-        env:
-          SSHPASS: ${{ secrets.SSH_PASSPHRASE }}
         run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT || 22 }} \
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes -p ${{ secrets.SSH_PORT || 22 }} \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '~/deploy_lab5.sh'
 
       # 6) Health-check через nginx -> gunicorn
       - name: Remote health check
-        env:
-          SSHPASS: ${{ secrets.SSH_PASSPHRASE }}
         run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT || 22 }} \
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes -p ${{ secrets.SSH_PORT || 22 }} \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '
             set -e
             for i in {1..30}; do
